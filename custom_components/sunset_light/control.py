@@ -33,3 +33,47 @@ async def set_color(client, profile: ProtocolProfile, r: int, g: int, b: int):
 
 async def set_brightness(client, profile: ProtocolProfile, brightness: int):
     await _send_packets(client, profile.build_brightness(brightness), profile.write_char_uuid)
+
+
+async def set_scene_id(client, profile: ProtocolProfile, scene_id: int, param: int | None):
+    if hasattr(profile, "build_scene_by_id"):
+        await _send_packets(client, profile.build_scene_by_id(scene_id, param), profile.write_char_uuid)
+
+
+async def set_music_mode(client, profile: ProtocolProfile, mode):
+    if hasattr(profile, "build_music_mode"):
+        await _send_packets(client, profile.build_music_mode(mode), profile.write_char_uuid)
+
+
+async def set_music_sensitivity(client, profile: ProtocolProfile, value: int):
+    if hasattr(profile, "build_music_sensitivity"):
+        await _send_packets(client, profile.build_music_sensitivity(value), profile.write_char_uuid)
+
+
+async def set_schedule(
+    client,
+    profile: ProtocolProfile,
+    on_enabled: bool,
+    on_hour: int,
+    on_minute: int,
+    on_days_mask: int,
+    off_enabled: bool,
+    off_hour: int,
+    off_minute: int,
+    off_days_mask: int,
+):
+    if hasattr(profile, "build_schedule"):
+        await _send_packets(
+            client,
+            profile.build_schedule(
+                on_enabled,
+                on_hour,
+                on_minute,
+                on_days_mask,
+                off_enabled,
+                off_hour,
+                off_minute,
+                off_days_mask,
+            ),
+            profile.write_char_uuid,
+        )

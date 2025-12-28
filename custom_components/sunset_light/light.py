@@ -16,11 +16,20 @@ from homeassistant.const import CONF_MAC, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import service, entity_platform
 import homeassistant.helpers.config_validation as cv
+from homeassistant.util.dt import WEEKDAYS
 import voluptuous as vol
 
 from bleak_retry_connector import establish_connection, BleakClientWithServiceCache
 
-from .const import CONF_PROFILE, DEFAULT_PROFILE, DOMAIN
+from .const import (
+    CONF_PROFILE,
+    DEFAULT_PROFILE,
+    DOMAIN,
+    SERVICE_SET_SCENE_ID,
+    SERVICE_SET_MUSIC_MODE,
+    SERVICE_SET_MUSIC_SENSITIVITY,
+    SERVICE_SET_SCHEDULE,
+)
 from . import control
 from .protocol import get_profile
 
@@ -56,6 +65,48 @@ async def async_setup_entry(
         SERVICE_SET_WHITE_SCHEMA,
         "async_handle_set_white",
     )
+    platform.async_register_entity_service(
+        SERVICE_SET_SCENE_ID,
+        vol.Schema(
+            {
+                vol.Required("scene_id"): int,
+                vol.Optional("scene_param"): int,
+            }
+        ),
+        "async_handle_set_scene_id",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_MUSIC_MODE,
+        vol.Schema({vol.Required("mode"): vol.Any(int, str)}),
+        "async_handle_set_music_mode",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_MUSIC_SENSITIVITY,
+        vol.Schema({vol.Required("value"): vol.All(int, vol.Range(min=0, max=100))}),
+        "async_handle_set_music_sensitivity",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_SCHEDULE,
+        vol.Schema(
+            {
+                vol.Required("on_enabled"): bool,
+                vol.Required("on_hour"): vol.All(int, vol.Range(min=0, max=23)),
+                vol.Required("on_minute"): vol.All(int, vol.Range(min=0, max=59)),
+                vol.Required("on_days_mask"): vol.Any(
+                    vol.All(int, vol.Range(min=0, max=0x7F)),
+                    [vol.In(WEEKDAYS)],
+                ),
+                vol.Required("off_enabled"): bool,
+                vol.Required("off_hour"): vol.All(int, vol.Range(min=0, max=23)),
+                vol.Required("off_minute"): vol.All(int, vol.Range(min=0, max=59)),
+                vol.Required("off_days_mask"): vol.Any(
+                    vol.All(int, vol.Range(min=0, max=0x7F)),
+                    [vol.In(WEEKDAYS)],
+                ),
+            }
+        ),
+        "async_handle_set_schedule",
+    )
 
 
 class SunsetLight(LightEntity):
@@ -64,6 +115,7 @@ class SunsetLight(LightEntity):
     _attr_supported_color_modes = {ColorMode.RGB}
     _attr_color_mode = ColorMode.RGB
     _attr_supported_features = LightEntityFeature.EFFECT
+
     def __init__(self, mac, name, hass: HomeAssistant, profile_key: str):
         """Initialize a Sunset Light."""
         self._mac = mac
@@ -78,6 +130,7 @@ class SunsetLight(LightEntity):
         self._profile_key = profile_key
         self._profile = get_profile(profile_key)
         self._attr_effect_list = self._profile.effect_list
+        self._weekday_index = {day: idx for idx, day in enumerate(WEEKDAYS)}
 
     @property
     def unique_id(self):
@@ -188,3 +241,57 @@ class SunsetLight(LightEntity):
         self._is_on = True
         self._effect = None
         self.async_write_ha_state()
+
+    async def async_handle_set_scene_id(self, scene_id: int, scene_param: int | None = None):
+        """Set scene by numeric ID (Hexagon-only)."""
+        client = await self._ensure_connected()
+        await control.set_scene_id(client, self._profile, scene_id, scene_param)
+        self._effect = f"Scene {scene_id}"
+        self.async_write_ha_state()
+
+    async def async_handle_set_music_mode(self, mode):
+        """Set music mode (Hexagon-only)."""
+        client = await self._ensure_connected()
+        await control.set_music_mode(client, self._profile, mode)
+
+    async def async_handle_set_music_sensitivity(self, value: int):
+        """Set music sensitivity 0-100 (Hexagon-only)."""
+        client = await self._ensure_connected()
+        await control.set_music_sensitivity(client, self._profile, value)
+
+    async def async_handle_set_schedule(
+        self,
+        on_enabled: bool,
+        on_hour: int,
+        on_minute: int,
+        on_days_mask,
+        off_enabled: bool,
+        off_hour: int,
+        off_minute: int,
+        off_days_mask,
+    ):
+        """Set combined on/off schedule (Hexagon-only)."""
+        client = await self._ensure_connected()
+
+        def mask_from(value):
+            if isinstance(value, int):
+                return value
+            mask = 0
+            for day in value:
+                idx = self._weekday_index.get(day)
+                if idx is not None:
+                    mask |= 1 << idx
+            return mask
+
+        await control.set_schedule(
+            client,
+            self._profile,
+            on_enabled,
+            on_hour,
+            on_minute,
+            mask_from(on_days_mask),
+            off_enabled,
+            off_hour,
+            off_minute,
+            mask_from(off_days_mask),
+        )

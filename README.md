@@ -4,7 +4,7 @@ This repository contains a Home Assistant custom component to control a Bluetoot
 
 ## Protocol profiles
 
-The light control protocol is abstracted behind profiles. The default "Sunset Light" profile matches the original device. Future device variants can be added as separate profiles without changing the entity code.
+The light control protocol is abstracted behind profiles. The default "Sunset Light" profile matches the original device. A "Hexagon Light" profile is also available (hue/saturation payloads, extended scenes); choose the profile during config flow.
 
 ## Installation
 
