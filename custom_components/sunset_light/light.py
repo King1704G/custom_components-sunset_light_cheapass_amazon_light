@@ -16,7 +16,7 @@ from homeassistant.const import CONF_MAC, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import service, entity_platform
 import homeassistant.helpers.config_validation as cv
-from homeassistant.util import dt as dt_util
+from homeassistant.const import WEEKDAYS
 import voluptuous as vol
 
 from bleak_retry_connector import establish_connection, BleakClientWithServiceCache
@@ -95,14 +95,14 @@ async def async_setup_entry(
                 vol.Required("on_minute"): vol.All(int, vol.Range(min=0, max=59)),
                 vol.Required("on_days_mask"): vol.Any(
                     vol.All(int, vol.Range(min=0, max=0x7F)),
-                    [vol.In(dt_util.WEEKDAYS)],
+                    [vol.In(WEEKDAYS)],
                 ),
                 vol.Required("off_enabled"): bool,
                 vol.Required("off_hour"): vol.All(int, vol.Range(min=0, max=23)),
                 vol.Required("off_minute"): vol.All(int, vol.Range(min=0, max=59)),
                 vol.Required("off_days_mask"): vol.Any(
                     vol.All(int, vol.Range(min=0, max=0x7F)),
-                    [vol.In(dt_util.WEEKDAYS)],
+                    [vol.In(WEEKDAYS)],
                 ),
             }
         ),
@@ -131,7 +131,7 @@ class SunsetLight(LightEntity):
         self._profile_key = profile_key
         self._profile = get_profile(profile_key)
         self._attr_effect_list = self._profile.effect_list
-        self._weekday_index = {day: idx for idx, day in enumerate(dt_util.WEEKDAYS)}
+        self._weekday_index = {day: idx for idx, day in enumerate(WEEKDAYS)}
 
     @property
     def unique_id(self):
