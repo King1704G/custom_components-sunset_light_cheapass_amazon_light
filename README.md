@@ -2,6 +2,10 @@
 
 This repository contains a Home Assistant custom component to control a Bluetooth-based sunset light (MeRGBW).
 
+## Protocol profiles
+
+The light control protocol is abstracted behind profiles. The default "Sunset Light" profile matches the original device. A "Hexagon Light" profile is also available (hue/saturation payloads, extended scenes); choose the profile during config flow.
+
 ## Installation
 
 1.  Copy the `custom_components/sunset_light` directory to the `custom_components` directory of your Home Assistant configuration.

@@ -1,0 +1,135 @@
+set_scene:
+  name: Set Scene
+  description: Set a predefined scene by name.
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: light
+    scene_name:
+      name: Scene name
+      description: Scene name from the effect list.
+      selector:
+        text:
+
+set_scene_id:
+  name: Set Scene by ID (Hexagon)
+  description: Set a scene by numeric ID (Hexagon profile).
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: light
+    scene_id:
+      name: Scene ID
+      selector:
+        number:
+          min: 0
+          max: 65535
+          mode: box
+    scene_param:
+      name: Scene parameter
+      description: Optional speed/intensity parameter.
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 65535
+          mode: box
+
+set_music_mode:
+  name: Set Music Mode (Hexagon)
+  description: Set Hexagon music mode.
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: light
+    mode:
+      name: Mode
+      selector:
+        select:
+          options:
+            - spectrum1
+            - spectrum2
+            - spectrum3
+            - flowing
+            - rolling
+            - rhythm
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+
+set_music_sensitivity:
+  name: Set Music Sensitivity (Hexagon)
+  description: Set Hexagon music sensitivity (0-100).
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: light
+    value:
+      name: Sensitivity
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: slider
+
+set_schedule:
+  name: Set Schedule (Hexagon)
+  description: Set combined on/off schedule (day mask bit0=Mon ... bit6=Sun).
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: light
+    on_enabled:
+      name: On enabled
+      selector:
+        boolean: {}
+    on_hour:
+      name: On hour
+      selector:
+        number:
+          min: 0
+          max: 23
+          mode: box
+    on_minute:
+      name: On minute
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    on_days_mask:
+      name: On days mask
+      description: Bitmask 0-127 or list of weekdays.
+      selector:
+        text:
+    off_enabled:
+      name: Off enabled
+      selector:
+        boolean: {}
+    off_hour:
+      name: Off hour
+      selector:
+        number:
+          min: 0
+          max: 23
+          mode: box
+    off_minute:
+      name: Off minute
+      selector:
+        number:
+          min: 0
+          max: 59
+          mode: box
+    off_days_mask:
+      name: Off days mask
+      description: Bitmask 0-127 or list of weekdays.
+      selector:
+        text:
